@@ -61,43 +61,48 @@ const server=http.createServer((req,res)=>{
     // GET /users/profile
     else if(method==="GET" && pathname.length===3 && pathname[1]==="users" && pathname[2]==="profile"){
         const token= checkUserAuthentication(req,res);
-        try{
-            const decode=jwt.verify(token, secretKey);
-            console.log("decode=",decode);
-            res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ message: `welcome ${decode.email}` }));
-        }
-        catch(err){
-            res.writeHead(401, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ message: 'invalid token' }));
-            return;
+        if(token){
+            try{
+                const decode=jwt.verify(token, secretKey);
+                // console.log("decode=",decode);
+                res.writeHead(200, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: `welcome ${decode.email}` }));
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
         }
     }
 /*1>create a new task*/
     //post /tasks
        else if(method==="POST" && pathname.length===2 && pathname[1]==="tasks" ){
-        checkUserAuthentication(req,res);
-        try{
-                req.on("end",()=>{
-                const body=JSON.parse(data);
-                body.id=i++;
-                body.history=[];
-                body.archive=false;
-                tasks.push(body);
-                response(body,"Task added",201,res)
-            });
-        }
-        catch(err){
-            res.writeHead(401, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ message: 'invalid token' }));
-            return;
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                    req.on("end",()=>{
+                    const body=JSON.parse(data);
+                    body.id=i++;
+                    body.history=[];
+                    body.archive=false;
+                    tasks.push(body);
+                    response(body,"Task added",201,res)
+                });
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
         }
     }
-
+    
 /*2>get all task*/
     //GET /tasks
     else if(method==="GET" && pathname.length===2 && pathname[1]==="tasks"){
-        checkUserAuthentication(req,res)
+        const token=checkUserAuthentication(req,res);
+        if(token){
         try{
             let num=0,array=[];
             if(tasks.length!=0){
@@ -129,280 +134,452 @@ const server=http.createServer((req,res)=>{
             return;
         }
     }
-
+}
 /*3>get a specific task by id*/
     //GET /tasks/:id
     //     /tasks/5
    else if(method==="GET" && pathname.length===3 && pathname[1]==="tasks" && num>0){
-        let k=0;
-            tasks.forEach((ele)=>{
-                if(ele.id==pathname[2]){
-                    k++;
-                    response(ele,"Task api called",200,res)
-                }
-            });
-            checkNotFound(k,res);           
-    }
+    const token=checkUserAuthentication(req,res);
+    if(token){
+        try{
+            let k=0;
+                tasks.forEach((ele)=>{
+                    if(ele.id==pathname[2]){
+                        k++;
+                        response(ele,"Task api called",200,res)
+                    }
+                });
+                checkNotFound(k,res);           
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+   }
 
 /*4>update the task*/
     //PUT /tasks/:id
     else if(method==="PUT" && pathname.length===3 && pathname[1]==="tasks"){
-        let k=0;
-        req.on("end",()=>{
-            let body=JSON.parse(data);
-            tasks.forEach((para)=>{
-                if(para.id==pathname[2]){
-                    for(let element in body){
-                      para[element]=body[element];
-                    }
-                    k++;
-                    response(para,"task updated",200,res);
-                }
-            })
-            checkNotFound(k,res);           
-        })
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                req.on("end",()=>{
+                    let body=JSON.parse(data);
+                    tasks.forEach((para)=>{
+                        if(para.id==pathname[2]){
+                            for(let element in body){
+                            para[element]=body[element];
+                            }
+                            k++;
+                            response(para,"task updated",200,res);
+                        }
+                    })
+                    checkNotFound(k,res);           
+                })
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
     }
 
     
 /*5>delete a task by id*/
     // DELETE /tasks/:id
     else if(method==="DELETE" && pathname.length===3 && pathname[1]==="tasks" && num>0){
-        let k=0;
-        tasks.forEach((para)=>{
-            if(para.id==pathname[2]){
-                tasks.splice(tasks.indexOf(para),1);
-                k++;
-                response("task deleted",200,res);
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                tasks.forEach((para)=>{
+                    if(para.id==pathname[2]){
+                        tasks.splice(tasks.indexOf(para),1);
+                        k++;
+                        response("task deleted",200,res);
+                    }
+                })
+                checkNotFound(k,res);           
             }
-            checkNotFound(k,res);           
-        })
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
     }
 
 /*6>Task prioritization*/
     //PATCH /tasks/:id/priority
     else if(method==="PATCH" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="priority"){
-        let k=0;
-        req.on("end",()=>{ 
-          let body=JSON.parse(data);
-            tasks.forEach((para)=>{
-                if(para.id==pathname[2]){
-                    let status=para.priority;
-                    para.priority=body.priority;
-                    k++;
-                    para.history.push({timeStamp:`${new Date()}`,change:`priority is changed form ${status} to ${body.priority}`,changedBy:para.assignedTo})
-                    response(body,"priority updated",200,res);  
-                    console.log("check=",typeof para.history)               
-                }
-            })
-            checkNotFound(k,res);           
-        })
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                req.on("end",()=>{ 
+                  let body=JSON.parse(data);
+                    tasks.forEach((para)=>{
+                        if(para.id==pathname[2]){
+                            let status=para.priority;
+                            para.priority=body.priority;
+                            k++;
+                            para.history.push({timeStamp:`${new Date()}`,change:`priority is changed form ${status} to ${body.priority}`,changedBy:para.assignedTo})
+                            response(body,"priority updated",200,res);  
+                        }
+                    })
+                    checkNotFound(k,res);           
+                })
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
     }
 
 /*7>Assign task to user*/
     //PATCH /tasks/:id/assign
     else if(method==="PATCH" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="assign"){
-            let k=0;
-            req.on("end",()=>{
-              let body=JSON.parse(data);
-                tasks.forEach((para)=>{
-                    if(para.id==pathname[2]){
-                        para.assignedTo= body.assignedTo; 
-                        k++;
-                        response(body,"task assigned",200,res);                 
-                    }
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                req.on("end",()=>{
+                  let body=JSON.parse(data);
+                    tasks.forEach((para)=>{
+                        if(para.id==pathname[2]){
+                            para.assignedTo= body.assignedTo; 
+                            k++;
+                            response(body,"task assigned",200,res);                 
+                        }
+                    })
+                    checkNotFound(k,res);           
                 })
-                checkNotFound(k,res);           
-            })
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
     }
 
 /*8>Unassign task */
    //PATCH /tasks/:id/unassign
    else if(method==="PATCH" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="unassign"){
-    let k=0;
-    tasks.forEach((para)=>{
-        if(para.id==pathname[2]){
-            para.assignedTo=null;
-            k++;
-            response(para,"task unassigned",200,res);                 
+    const token=checkUserAuthentication(req,res);
+    if(token){
+        try{
+            let k=0;
+            tasks.forEach((para)=>{
+                if(para.id==pathname[2]){
+                    para.assignedTo=null;
+                    k++;
+                    response(para,"task unassigned",200,res);                 
+                }
+            })
+            checkNotFound(k,res);           
+           }
+           catch(err){
+            res.writeHead(401, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify({ message: 'invalid token' }));
+            return;
         }
-    })
-    checkNotFound(k,res);           
-   }
+    }
+}
 
 /*9>categorize tasks*/ 
     //PATCH /tasks/:id/categorize
     else if(method==="PATCH" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="categorize"){
-            let k=0;
-            req.on("end",()=>{
-               let body=JSON.parse(data);
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                req.on("end",()=>{
+                   let body=JSON.parse(data);
+                    tasks.forEach((para)=>{
+                        if(para.id==pathname[2]){
+                            k++;
+                            para.category= body.category; 
+                            response(body,"task categorized",200,res);                 
+                        }
+                    })    
+                    checkNotFound(k,res);           
+                })
+        }
+        catch(err){
+            res.writeHead(401, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify({ message: 'invalid token' }));
+            return;
+        }
+    }
+}
+
+/*10>history*/
+    //GET /tasks/:id/history
+    else if(method==="GET" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="history"){
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
                 tasks.forEach((para)=>{
                     if(para.id==pathname[2]){
                         k++;
-                        para.category= body.category; 
-                        response(body,"task categorized",200,res);                 
+                        response(para.history,"task history",200,res);                 
                     }
-                })    
+                })
                 checkNotFound(k,res);           
-            })
-    }
-
-/*history*/
-    //GET /tasks/:id/history
-    else if(method==="GET" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="history"){
-        let k=0;
-        tasks.forEach((para)=>{
-            if(para.id==pathname[2]){
-                k++;
-                response(para.history,"task history",200,res);                 
             }
-        })
-        checkNotFound(k,res);           
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 
 /*11>Task commenting*/
     //POST /tasks/:id/comments
     else if(method==="POST" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="comments"){
-        let k=0;
-        req.on("end",()=>{
-           let body=JSON.parse(data);
-            tasks.forEach((para)=>{
-                if(para.id==pathname[2]){
-                    para.comments=body
-                    k++;
-                    response(body,"comment created",201,res);                 
-                }
-            })
-            checkNotFound(k,res);           
-        })  
-    }
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                req.on("end",()=>{
+                   let body=JSON.parse(data);
+                    tasks.forEach((para)=>{
+                        if(para.id==pathname[2]){
+                            para.comments=body
+                            k++;
+                            response(body,"comment created",201,res);                 
+                        }
+                    })
+                    checkNotFound(k,res);           
+                })  
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*12>search tasks*/
     //GET /tasks/search
     else if(method==="GET" && pathname.length===3 && pathname[1]==="tasks" && pathname[2]==="search"){
-        let arr=[];
-        tasks.forEach((para)=>{
-            if(para.title==queryPara.q || para.description==queryPara.q){
-                arr.push(para)
-            }       
-        })
-        response(arr,"task searched",200,res);                 
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let arr=[];
+                tasks.forEach((para)=>{
+                    if(para.title==queryPara.q || para.description==queryPara.q){
+                        arr.push(para)
+                    }       
+                })
+                response(arr,"task searched",200,res);                 
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
     }
-
 /*13>Task completion*/
     //PATCH /tasks/:id/complete
     else if(method==="PATCH" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="complete"){
-        let k=0;
-        tasks.forEach((para)=>{
-            if(para.id==pathname[2]){
-                k++;
-                let status=para.status;
-                para.status="completed";
-                response(para,"task completed",200,res);      
-                para.history.push({timeStamp:new Date(),change:`status changed form ${status} to ${para.status}`})           
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                tasks.forEach((para)=>{
+                    if(para.id==pathname[2]){
+                        k++;
+                        let status=para.status;
+                        para.status="completed";
+                        response(para,"task completed",200,res);      
+                        para.history.push({timeStamp:new Date(),change:`status changed form ${status} to ${para.status}`})           
+                    }
+                })
+                checkNotFound(k,res);           
             }
-        })
-        checkNotFound(k,res);           
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*14>complete all pending tasks*/
     //PATCH /tasks/complete-all
     else if(method==="PATCH" && pathname.length===3 && pathname[1]==="tasks" && pathname[2]==="complete-all"){
-        let arr=[];
-        tasks.forEach((para)=>{
-            if(para.status!="completed"){
-                para.status="completed";
-                arr.push(para);
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let arr=[];
+                tasks.forEach((para)=>{
+                    if(para.status!="completed"){
+                        para.status="completed";
+                        arr.push(para);
+                    }
+                })
+                response(arr,"all task completed",200,res);                 
             }
-        })
-        response(arr,"all task completed",200,res);                 
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
     
 /*15>Delete all completed tasks*/
     //DELETE /tasks/delete-completed
     else if(method==="DELETE" && pathname.length===3 && pathname[1]==="tasks" && pathname[2]==="delete-completed"){
-        let count=0,j=0;
-        tasks.forEach((para)=>{
-            if(para.status==="completed"){
-                    j++;
-        }})
-        recursive();
-        function recursive(){
-            tasks.forEach((para)=>{
-                if(para.status==="completed"){
-                    tasks.splice(tasks.indexOf(para),1);
-                    count++
-                }
-            })
-            if(j!=0){
-                j--;
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let count=0,j=0;
+                tasks.forEach((para)=>{
+                    if(para.status==="completed"){
+                            j++;
+                }})
                 recursive();
+                function recursive(){
+                    tasks.forEach((para)=>{
+                        if(para.status==="completed"){
+                            tasks.splice(tasks.indexOf(para),1);
+                            count++
+                        }
+                    })
+                    if(j!=0){
+                        j--;
+                        recursive();
+                    }
+                } 
+                response(`deleted count=${count}`,"all completed tasks deleted",200,res);                 
             }
-        } 
-        response(`deleted count=${count}`,"all completed tasks deleted",200,res);                 
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*16>due date remainder*/
     //GET /tasks/due-soon
     else if(method==="GET" && pathname.length===3 && pathname[1]==="tasks" && pathname[2]==="due-soon"){
-        let arr=[];
-        tasks.forEach((para)=>{
-            let date1=new Date();
-            let date2=new Date(para.dueDate);
-            let diff=date1.getTime()-date2.getTime();
-            let dayDiff=diff/(1000*60*60*24);
-            console.log(dayDiff)
-            if(dayDiff<=7){
-                arr.push(para);
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let arr=[];
+                tasks.forEach((para)=>{
+                    let date1=new Date();
+                    let date2=new Date(para.dueDate);
+                    let diff=date1.getTime()-date2.getTime();
+                    let dayDiff=diff/(1000*60*60*24);
+                    if(dayDiff<=7 && dayDiff>=0){
+                        console.log(dayDiff);
+                        arr.push(para);
+                    }
+                })
+                response(arr,"due soon tasks",200,res);                 
             }
-        })
-        response(arr,"due soon tasks",200,res);                 
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*17>overdue tasks*/
     //GET /tasks/overdue
     else if(method==="GET" && pathname.length===3 && pathname[1]==="tasks" && pathname[2]==="overdue"){
-        let arr=[];
-        tasks.forEach((para)=>{
-            let date1=new Date();
-            let date2=new Date(para.dueDate);
-            let diff=date1.getTime()-date2.getTime();
-            let dayDiff=diff/(1000*60*60*24);
-            console.log(dayDiff)
-            if(dayDiff<0){
-                arr.push(para);
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let arr=[];
+                tasks.forEach((para)=>{
+                    let date1=new Date();
+                    let date2=new Date(para.dueDate);
+                    let diff=date1.getTime()-date2.getTime();
+                    let dayDiff=diff/(1000*60*60*24);
+                    if(dayDiff<0){
+                        arr.push(para);
+                    }
+                })
+                response(arr,"overdue tasks",200,res);                 
             }
-        })
-        response(arr,"overdue tasks",200,res);                 
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*18>Task duplication*/
     //POST /tasks/:id/duplicate
     else if(method==="POST" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="duplicate"){
-        tasks.forEach((para)=>{
-            if(para.id===pathname[2]){
-                para.id=id++;
-                tasks.push(para);
-                response(para,"duplicate completed",200,res);                 
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0,arr;
+                tasks.forEach((para)=>{
+                    if(para.id==pathname[2]){
+                        k++;
+                        arr={...para}
+                        arr.id=i++;
+                        tasks.push(arr);
+                        console.log(i);
+                        response(para,"duplicate completed",200,res);                 
+                    }
+                })
+                // checkNotFound(k,res);                           
             }
-        })
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*19>Archive completed tasks*/
     //PATCH /tasks/id/archive
     else if(method==="PATCH" && pathname.length===4 && pathname[1]==="tasks" && pathname[3]==="archive"){
-        let k=0;
-        tasks.forEach((para)=>{
-            if(para.id==pathname[2] && para.status==="completed"){
-                archive.push(para);
-                archive.archive=true;
-                tasks.splice(tasks.indexOf(para),1);
-                k++;
-                response(archive,"task archived",200,res);            
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let k=0;
+                tasks.forEach((para)=>{
+                    if(para.id==pathname[2] && para.status==="completed"){
+                        archive.push(para);
+                        archive.archive=true;
+                        tasks.splice(tasks.indexOf(para),1);
+                        k++;
+                        response(archive,"task archived",200,res);            
+                    }
+                })
+                checkNotFound(k,res);           
             }
-        })
-        checkNotFound(k,res);           
-    }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
 
 /*20>task sharing*/
     //POST /tasks/:id/share
@@ -413,18 +590,28 @@ const server=http.createServer((req,res)=>{
 /*21>Bulk task creation*/
     //POST /tasks/bulk
     else if(method==="POST" && pathname.length===3 & pathname[1]==="tasks" && pathname[2]==="bulk"){
-        let arr=[];
-        req.on("end",()=>{
-            let body=JSON.parse(data);
-            body.forEach((para)=>{
-                para.id=i++;
-                tasks.push(para);
-                arr.push(para)
-                console.log("arr=",arr);
-            })
-            response(arr,"bulk task created",200,res);                 
-        })
-    }
+        const token=checkUserAuthentication(req,res);
+        if(token){
+            try{
+                let arr=[];
+                req.on("end",()=>{
+                    let body=JSON.parse(data);
+                    body.forEach((para)=>{
+                        para.id=i++;
+                        tasks.push(para);
+                        arr.push(para)
+                    })
+                    response(arr,"bulk task created",200,res);                 
+                })
+            }
+            catch(err){
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify({ message: 'invalid token' }));
+                return;
+            }
+        }
+}
+
 //else others
     else{
         response("API not found",404,res);                 
