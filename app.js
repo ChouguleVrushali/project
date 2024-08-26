@@ -48,12 +48,11 @@ const server=http.createServer((req,res)=>{
             })
             if(isUserPresent){
                 const token=jwt.sign({email:isUserPresent.emailAddress},secretKey,{expiresIn:'1h'});
-                res.writeHead(200,({'Content-Type':'application/json'}));
-                res.end(JSON.stringify({message:"Login Successful",data:{token}}));
+                response(token,"Login Successful",200,res);
+
             }
             else{
-                res.writeHead(200,({'Content-Type':'application/json'}));
-                res.end(JSON.stringify({message:"User not found"}));
+                response("User not found",404,res)
             }
         })
     }
@@ -65,13 +64,11 @@ const server=http.createServer((req,res)=>{
             try{
                 const decode=jwt.verify(token, secretKey);
                 // console.log("decode=",decode);
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: `welcome ${decode.email}` }));
+                response(`welcome ${decode.email}`,200,res)
+
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -91,9 +88,7 @@ const server=http.createServer((req,res)=>{
                 });
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -129,15 +124,12 @@ const server=http.createServer((req,res)=>{
             }
         }
         catch(err){
-            res.writeHead(401, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ message: 'invalid token' }));
-            return;
+            response("invalid token",401,res);
         }
     }
 }
 /*3>get a specific task by id*/
     //GET /tasks/:id
-    //     /tasks/5
    else if(method==="GET" && pathname.length===3 && pathname[1]==="tasks" && num>0){
     const token=checkUserAuthentication(req,res);
     if(token){
@@ -152,9 +144,7 @@ const server=http.createServer((req,res)=>{
                 checkNotFound(k,res);           
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
    }
@@ -181,9 +171,7 @@ const server=http.createServer((req,res)=>{
                 })
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -206,9 +194,7 @@ const server=http.createServer((req,res)=>{
                 checkNotFound(k,res);           
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -235,9 +221,7 @@ const server=http.createServer((req,res)=>{
                 })
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -262,9 +246,7 @@ const server=http.createServer((req,res)=>{
                 })
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -286,9 +268,7 @@ const server=http.createServer((req,res)=>{
             checkNotFound(k,res);           
            }
            catch(err){
-            res.writeHead(401, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ message: 'invalid token' }));
-            return;
+            response("invalid token",401,res);
         }
     }
 }
@@ -313,9 +293,7 @@ const server=http.createServer((req,res)=>{
                 })
         }
         catch(err){
-            res.writeHead(401, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ message: 'invalid token' }));
-            return;
+            response("invalid token",401,res);
         }
     }
 }
@@ -336,9 +314,7 @@ const server=http.createServer((req,res)=>{
                 checkNotFound(k,res);           
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -364,9 +340,7 @@ const server=http.createServer((req,res)=>{
                 })  
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -386,9 +360,7 @@ const server=http.createServer((req,res)=>{
                 response(arr,"task searched",200,res);                 
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
     }
@@ -411,9 +383,7 @@ const server=http.createServer((req,res)=>{
                 checkNotFound(k,res);           
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -434,9 +404,7 @@ const server=http.createServer((req,res)=>{
                 response(arr,"all task completed",200,res);                 
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -468,9 +436,7 @@ const server=http.createServer((req,res)=>{
                 response(`deleted count=${count}`,"all completed tasks deleted",200,res);                 
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -485,19 +451,16 @@ const server=http.createServer((req,res)=>{
                 tasks.forEach((para)=>{
                     let date1=new Date();
                     let date2=new Date(para.dueDate);
-                    let diff=date1.getTime()-date2.getTime();
-                    let dayDiff=diff/(1000*60*60*24);
+                    let diff=date2.getTime()-date1.getTime();
+                    let dayDiff=Math.floor(diff/(1000*60*60*24));
                     if(dayDiff<=7 && dayDiff>=0){
-                        console.log(dayDiff);
                         arr.push(para);
                     }
                 })
                 response(arr,"due soon tasks",200,res);                 
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -512,8 +475,8 @@ const server=http.createServer((req,res)=>{
                 tasks.forEach((para)=>{
                     let date1=new Date();
                     let date2=new Date(para.dueDate);
-                    let diff=date1.getTime()-date2.getTime();
-                    let dayDiff=diff/(1000*60*60*24);
+                    let diff=date2.getTime()-date1.getTime();
+                    let dayDiff=Math.floor(diff/(1000*60*60*24));
                     if(dayDiff<0){
                         arr.push(para);
                     }
@@ -521,9 +484,7 @@ const server=http.createServer((req,res)=>{
                 response(arr,"overdue tasks",200,res);                 
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -548,9 +509,7 @@ const server=http.createServer((req,res)=>{
                 // checkNotFound(k,res);                           
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -574,9 +533,7 @@ const server=http.createServer((req,res)=>{
                 checkNotFound(k,res);           
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
@@ -605,9 +562,7 @@ const server=http.createServer((req,res)=>{
                 })
             }
             catch(err){
-                res.writeHead(401, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ message: 'invalid token' }));
-                return;
+                response("invalid token",401,res);
             }
         }
 }
