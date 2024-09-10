@@ -1,10 +1,10 @@
 import url from "url";
-export function decodeURL(url){
-    const path=url.parse(req.url,true);
+export function decodeURL(reqUrl){
+    const path=url.parse(reqUrl,true);
     let queryPara=path.query||{};
     let pathname=path.pathname.split("/");
      return {
-        ...queryPara,
+        queryPara:queryPara,
         pathSegments:pathname,
         pathLength:pathname.length
     }
